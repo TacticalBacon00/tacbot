@@ -1,0 +1,11 @@
+**THE REMOVING COMMANDS UPDATE**
+
+GOALS:
+- Add the ability to remove existing commands
+- Verify that the requested command to remove actually exists
+
+FIXES:
+-
+
+ADDITIONAL:
+-
