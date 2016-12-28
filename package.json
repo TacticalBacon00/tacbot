@@ -1,6 +1,6 @@
 {
   "name": "tacbot2",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "This is a twitch chat bot.",
   "main": "app.js",
   "scripts": {

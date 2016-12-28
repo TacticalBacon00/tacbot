@@ -57,17 +57,6 @@ function directoryPermission(permissionLevel){ //**Returns the directory associa
  }
  return permissionDirectory;
 }
-function writeCommand(commandInput, permissionLevel, commandResult){ //**Writes command to specified file and assigns appropriate permission**
-  var permissionDirectory = directoryPermission(permissionLevel);
- if (permissionDirectory !== null) {
-  fs.writeFile('./commands/' + permissionDirectory + '/' + commandInput, commandResult, function(err){
-    if (err) {
-      return console.error(err);
-    }
-    console.log("Command Saved!");
-    rebuildCommandDatabase();
-  })
-} else { return;}}
 function convertStringToEachWord(input){ //**Converts a string into an array of each word in the string**
   var partialString;
   var arrayOfString = input.split(" ");
@@ -81,12 +70,34 @@ function convertArrayToString(arrayToConvert, indexToStartFrom){ //***Converts a
   }
   return returnString;
 }
+function writeCommand(commandInput, permissionLevel, commandResult){ //**Writes command to specified file and assigns appropriate permission**
+  var permissionDirectory = directoryPermission(permissionLevel);
+ if (permissionDirectory !== null) {
+  fs.writeFile('./commands/' + permissionDirectory + '/' + commandInput, commandResult, function(err){
+    if (err) {
+      return console.error(err);
+    }
+    console.log("Command Saved!");
+    rebuildCommandDatabase();
+  })
+} else { return;}}
 function deleteCommand(commandToDelete){ //**Deletes the specified command from the correct directory**
-  //console.log(commandToDelete + " and " + searchCommand(commandToDelete));
-  //console.log(searchCommand(commandToDelete));
   fs.unlink('./commands/' + searchCommand(commandToDelete) + '/' + commandToDelete);
   return "Command " + commandToDelete + " has been successfully deleted from the database."
 }
+function editCommand(commandToEdit, commandToEditContent){
+  var permissionDirectory = searchCommand(commandToEdit);
+  if (permissionDirectory !== null) {
+  fs.writeFile('./commands/' + searchCommand(commandToEdit) + '/' + commandToEdit, commandToEditContent, function(err){
+    if (err) {
+      return console.error(err);
+    }
+    //console.log("Command Edited!");
+    rebuildCommandDatabase();
+  })} else {return;}
+  return "Command " + commandToEdit + " has been successfully edited and the database has been reloaded."
+}
+
 
 
 //**Initialization functions**
@@ -127,23 +138,32 @@ twitchClient.on("chat", function(channel, user, message, self){ //Listening for 
             twitchClient.say(speakingChannel, "Correct usage for !addcommand: '!addcommand [!CommandToAdd] [Permission Level 1-4] [Whatever you want the command to say]'");
           }
 
+
           //console.log(writeCommand(message);
           //activeCommand =
           //console.log(convertStringToEachWord(message)); //Converts each word of the user's message into a separate entry in an array
           //console.log(convertStringToEachWord(message)[1]); //Calls the second word in the message
           //writeCommand()
         }
+        else if (activeCommand == '!editcommand' || activeCommand == '!editcomm') {
+          var commandWeAreEditingInThisFunction = convertStringToEachWord(message)[1].toLowerCase(); //Stores the command that we are attempting to edit
+          if (modCommands.indexOf(commandWeAreEditingInThisFunction) !== -1){
+            //EDIT COMMAND CODE HERE
+            var commandToEditInfo = convertStringToEachWord(message);
+            if(commandToEditInfo[1].charAt(0)== "!" && commandToEditInfo.length >= 3){ //Verifies that the command is in the right context
+              var commandToEditResponse = convertArrayToString(commandToEditInfo, 2); //Converts the array of the command back into a string
+              twitchClient.say(speakingChannel, editCommand(commandWeAreEditingInThisFunction, commandToEditResponse)); //Runs the command edit function
+            }
+            else {
+              twitchClient.say(speakingChannel, "Correct usage for !editcommand: '!editcommand [!CommandToEdit] [Whatever you want the command to say]'");
+            }
+
+          }
+        }
         else if (activeCommand == '!removecommand' || activeCommand == '!delcomm') { //Checks if !removecommand is being called
           var commandToRemove = convertStringToEachWord(message)[1].toLowerCase(); //Stores the command that we are attempting to remove
-          //REMOVE COMMAND FUNCTIONS HERE
-         /*
-         1. Check if the command exists
-         2. Check if the command is mod only or below
-         3. Filter out the command that is being requested
-         4. Remove the command
-         */
-         if(everyoneCommands.indexOf(commandToRemove) !== -1 || modOnlyCommands.indexOf(commandToRemove) !== -1){
-           twitchClient.say(speakingChannel, deleteCommand(commandToRemove));
+         if(modCommands.indexOf(commandToRemove) !== -1){
+           twitchClient.say(speakingChannel, deleteCommand(commandToRemove)); //Runs the command delete function and replies in chat to confirm a successful deletion
          }}
         else if (activeCommand == '!refresh') { //Checks if !refresh is being called
           rebuildCommandDatabase();

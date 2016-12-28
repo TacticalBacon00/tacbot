@@ -1,12 +1,12 @@
-**THE REMOVING COMMANDS UPDATE**
+**THE EDITING COMMANDS UPDATE**
 
 GOALS:
-- Add the ability to remove existing commands
-- Verify that the requested command to remove actually exists
+- Add the ability to edit existing commands
+- Verify that the requested command to edit actually exists
 
 FIXES:
-- Moved the permission/directory converter for new commands to it's own function
-- Adjusted remove command command to be non-case sensitive
+- Simplified the delete command command to search the combined modCommands array, instead of comparing Everyone and Mod Only
+- Optimized the search for a command to edit by calling my search function
 
 ADDITIONAL:
 -
