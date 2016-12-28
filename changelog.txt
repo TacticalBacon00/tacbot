@@ -5,7 +5,8 @@ GOALS:
 - Verify that the requested command to remove actually exists
 
 FIXES:
--
+- Moved the permission/directory converter for new commands to it's own function
+- Adjusted remove command command to be non-case sensitive
 
 ADDITIONAL:
 -

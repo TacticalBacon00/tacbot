@@ -35,6 +35,7 @@ function commandChecker(userMessage){ //**Pull the first word in a chat message,
     activeCommand = firstWord.toString();
     activeCommand = activeCommand.toLowerCase(); //Converts activeCommand to lowercase, so it's not case sensitive
     //console.log("console log activeCommand: " + activeCommand);
+    console.log(activeCommand);
     return firstWord;
   }
 }
@@ -47,14 +48,18 @@ function searchCommand(commandToSearch){ //**Confirms the permission level and f
   if(modOnlyCommands.indexOf(commandToSearch.toString()) !== -1 && userType >= 2) return 'Mod Only';
   if(broadcasterOnlyCommands.indexOf(commandToSearch.toString()) !== -1 && userType >= 4) return 'Broadcaster';
 }
-function writeCommand(commandInput, permissionLevel, commandResult){ //**Writes command to specified file and assigns appropriate permission**
+function directoryPermission(permissionLevel){ //**Returns the directory associated with the permission level of a new command**
   var permissionDirectory;
   if (permissionLevel == 1) { permissionDirectory = "Everyone";
  } else if (permissionLevel == 2) { permissionDirectory = "Mod Only";
  } else if (permissionLevel == 4) { permissionDirectory = "Broadcaster";
  } else {permissionDirectory = null;
  }
- if (permissionLevel !== null) {
+ return permissionDirectory;
+}
+function writeCommand(commandInput, permissionLevel, commandResult){ //**Writes command to specified file and assigns appropriate permission**
+  var permissionDirectory = directoryPermission(permissionLevel);
+ if (permissionDirectory !== null) {
   fs.writeFile('./commands/' + permissionDirectory + '/' + commandInput, commandResult, function(err){
     if (err) {
       return console.error(err);
@@ -76,7 +81,12 @@ function convertArrayToString(arrayToConvert, indexToStartFrom){ //***Converts a
   }
   return returnString;
 }
-
+function deleteCommand(commandToDelete){ //**Deletes the specified command from the correct directory**
+  //console.log(commandToDelete + " and " + searchCommand(commandToDelete));
+  //console.log(searchCommand(commandToDelete));
+  fs.unlink('./commands/' + searchCommand(commandToDelete) + '/' + commandToDelete);
+  return "Command " + commandToDelete + " has been successfully deleted from the database."
+}
 
 
 //**Initialization functions**
@@ -97,11 +107,12 @@ twitchClient.on("chat", function(channel, user, message, self){ //Listening for 
       if (searchCommand(activeCommand) !== undefined){ //Checks if the command is valid
         twitchClient.say(speakingChannel, fileOpener.readResponse(searchCommand(activeCommand), commandChecker(message)).toString());
       }
-    } else if (user.badges.moderator == 1){ //Checks if the speaking user is a moderator
+    }
+    else if (user.badges.moderator == 1){ //Checks if the speaking user is a moderator
       console.log("Speaker is a Moderator.");
       userType = 2;
       if (searchCommand(activeCommand) !== undefined){ //Checks if the command is valid
-        if (activeCommand == '!addcommand') { //Checks if !addcommand is being called
+        if (activeCommand == '!addcommand' || activeCommand == '!addcomm') { //Checks if !addcommand is being called
           //console.log("command add requested");
           var commandToWriteInfo = convertStringToEachWord(message); //Stores the message in individual words, for easy reference later
           //commandToWriteInfo[1]==Command to write; commandToWriteInfo[2]==permission level; commandToWriteInfo[3+]== text to write to the command
@@ -122,28 +133,42 @@ twitchClient.on("chat", function(channel, user, message, self){ //Listening for 
           //console.log(convertStringToEachWord(message)[1]); //Calls the second word in the message
           //writeCommand()
         }
+        else if (activeCommand == '!removecommand' || activeCommand == '!delcomm') { //Checks if !removecommand is being called
+          var commandToRemove = convertStringToEachWord(message)[1].toLowerCase(); //Stores the command that we are attempting to remove
+          //REMOVE COMMAND FUNCTIONS HERE
+         /*
+         1. Check if the command exists
+         2. Check if the command is mod only or below
+         3. Filter out the command that is being requested
+         4. Remove the command
+         */
+         if(everyoneCommands.indexOf(commandToRemove) !== -1 || modOnlyCommands.indexOf(commandToRemove) !== -1){
+           twitchClient.say(speakingChannel, deleteCommand(commandToRemove));
+         }}
         else if (activeCommand == '!refresh') { //Checks if !refresh is being called
           rebuildCommandDatabase();
           twitchClient.say(speakingChannel, "Command list has been refreshed");
         }
         else { //Checks for all other commands
           twitchClient.say(speakingChannel, fileOpener.readResponse(searchCommand(activeCommand), commandChecker(message)).toString());
-        }
-      }
+        }}
       //if(modCommands.indexOf(commandChecker(message).toString()) == -1) return;
       //commandResponse = fileOpener.readResponse(userType, commandHandling.commandChecker(message)).toString();
       //twitchClient.say(speakingChannel, user["display-name"] + " this is a test message." + Math.random());
       //twitchClient.say(speakingChannel, "[STRING RESPONSE HERE]" + Math.random());
       //KEEP THIS ONE twitchClient.say(speakingChannel, fileOpener.readResponse(userType, commandChecker(message)).toString());
-    } else if (user.badges.premium == 1){ //Checks if the speaking user is a Prime/Turbo user
+    }
+    else if (user.badges.premium == 1){ //Checks if the speaking user is a Prime/Turbo user
       console.log("Speaker is Prime or Turbo.");
-    } else if (user.badges.broadcaster == 1){ //Checks if the speaking user is the broadcaster
+    }
+    else if (user.badges.broadcaster == 1){ //Checks if the speaking user is the broadcaster
       console.log("Speaker is the Broadcaster.");
       userType = 4;
       if (searchCommand(activeCommand) !== undefined){ //Checks if the command is valid
         twitchClient.say(speakingChannel, fileOpener.readResponse(searchCommand(activeCommand), commandChecker(message)).toString()); //Compiles a combination of the !command and folder path into a string, then says the text inside the file.
       }
-    } else {console.log ("I have no idea what just happened.");
+    }
+    else {console.log ("I have no idea what just happened.");
   }
  }
  //if (message=="!twitter") {twitchClient.action(speakingChannel, social.twitter.url);}
